@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retirement Scenario 1: Required Growth Rate Calculator (v3)</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="theme-switch-wrapper">
+        <label class="theme-switch" for="checkbox">
+            <input type="checkbox" id="checkbox" />
+            <div class="slider round"></div>
+        </label>
+        <span>Dark Mode</span>
+    </div>
+
+    <div class="calculator-container">
+        <h1>Retirement Scenario 1: Required Growth Rate Calculator</h1>
+        <p>Calculates the future value of assets and withdrawals to determine the required average annual investment growth rate.</p>
+        
+        <div class="input-grid">
+            <div class="input-group">
+                <label for="current_date">Current Date</label>
+                <input type="date" id="current_date">
+            </div>
+            <div class="input-group">
+                <label for="cv_receipt_date">CV Receipt Date</label>
+                <input type="date" id="cv_receipt_date">
+            </div>
+            <div class="input-group">
+                <label for="payout_start_date">Payout Start Date</label>
+                <input type="date" id="payout_start_date">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="cv">Initial Investment (CV, $)</label>
+            <input type="number" id="cv" value="600000">
+        </div>
+
+        <div class="input-group">
+            <label for="c">Annual Contribution (After CV, Before Payout, $)</label>
+            <input type="number" id="c" value="10000">
+        </div>
+        
+        <div class="input-group">
+            <label for="p_current_value">Annual Withdrawal (in today's dollars, $)</label>
+            <input type="number" id="p_current_value" value="52000">
+        </div>
+        
+        <div class="input-group">
+            <label for="g_income">Annual Withdrawal Growth Rate (%)</label>
+            <input type="number" id="g_income" value="3">
+        </div>
+
+        <div class="input-group">
+            <label for="n_payout">Total Payout Period (Years)</label>
+            <input type="number" id="n_payout" value="30">
+        </div>
+
+        <button id="calculate-btn">Calculate Required Growth Rate</button>
+
+        <div class="toggles-wrapper">
+            <div class="details-toggle-container">
+                <span>Detailed View</span>
+                <label class="theme-switch" for="details-toggle">
+                    <input type="checkbox" id="details-toggle" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+            <div class="details-toggle-container">
+                <span>Graph View</span>
+                <label class="theme-switch" for="graph-toggle">
+                    <input type="checkbox" id="graph-toggle" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </div>
+
+
+        <div id="result-container" class="hidden">
+            <h2>Calculation Results</h2>
+            <div id="intermediate-result"></div>
+            <p id="result-text"></p>
+        </div>
+
+        <div id="graph-container">
+            <canvas id="balance-chart"></canvas>
+        </div>
+
+        <div id="details-table-container">
+            </div>
+    </div>
+
+    <script src="calculator.js"></script>
+</body>
+</html>
