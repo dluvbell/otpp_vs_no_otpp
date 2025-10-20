@@ -3,6 +3,20 @@
  * Author: dluvbell
  */
 document.addEventListener('DOMContentLoaded', () => {
+    // --- [Added] Welcome Modal Logic ---
+    const modalOverlay = document.getElementById('welcome-modal-overlay');
+    const agreementCheckbox = document.getElementById('agreement-checkbox');
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+
+    agreementCheckbox.addEventListener('change', () => {
+        confirmBtn.disabled = !agreementCheckbox.checked;
+    });
+
+    confirmBtn.addEventListener('click', () => {
+        modalOverlay.style.display = 'none';
+    });
+    // --- End of Modal Logic ---
+
     // --- Dark Mode ---
     const themeToggle = document.getElementById('checkbox');
     themeToggle.addEventListener('change', () => {
