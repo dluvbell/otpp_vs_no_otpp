@@ -99,9 +99,23 @@
         </div>
         </div>
 
-    <script src="calculator.js"></script>
     <footer>
         <p>&copy; 2025 dluvbell. All Rights Reserved.</p>
     </footer>
+
+    <div id="welcome-modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <h2>Welcome & Notice</h2>
+            <p>This calculator determines the average annual growth rate required for a retirement fund based on your inputs.</p>
+            <p>The results, including tables and graphs, are for educational purposes only and do not constitute financial advice. Actual outcomes may vary.</p>
+            <div class="modal-agreement">
+                <input type="checkbox" id="agreement-checkbox">
+                <label for="agreement-checkbox">I have read, understand, and agree to the terms of use.</label>
+            </div>
+            <button id="modal-confirm-btn" disabled>Acknowledge</button>
+        </div>
+    </div>
+
+    <script src="calculator.js"></script>
 </body>
 </html>
