@@ -1,138 +1,288 @@
-/* --- Color Variables --- */
-:root {
-    --bg-color: #f4f7f9;
-    --container-bg-color: #ffffff;
-    --text-color: #333;
-    --subtext-color: #666;
-    --border-color: #ccc;
-    --header-color: #333;
-    --result-bg-color: #e9f5ff;
-    --result-border-color: #b3d7ff;
-    --result-header-color: #0056b3;
-    --table-header-bg-color: #f2f2f2;
-}
+/**
+ * Retirement Scenario 1: Required Growth Rate Calculator
+ *
+ * @author    dluvbell
+ * @version   1.0.0
+ * @license   MIT
+ * @date      2025-10-19
+ */
 
-body.dark-mode {
-    --bg-color: #1a1a1a;
-    --container-bg-color: #2c2c2c;
-    --text-color: #e0e0e0;
-    --subtext-color: #a0a0a0;
-    --border-color: #555;
-    --header-color: #ffffff;
-    --result-bg-color: #1e3a52;
-    --result-border-color: #3c5a78;
-    --result-header-color: #89b8e6;
-    --table-header-bg-color: #3a3a3a;
-}
-/* --- End of Color Variables --- */
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Dark Mode ---
+    const themeToggle = document.getElementById('checkbox');
+    themeToggle.addEventListener('change', () => {
+        document.body.classList.toggle('dark-mode');
+    });
 
-body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-    margin: 0;
-    padding: 40px 20px;
-    box-sizing: border-box;
-    transition: background-color 0.3s, color 0.3s;
-}
+    // --- Calculator ---
+    const calculateBtn = document.getElementById('calculate-btn');
+    const resultContainer = document.getElementById('result-container');
+    const intermediateResultEl = document.getElementById('intermediate-result');
+    const resultText = document.getElementById('result-text');
+    
+    const tableContainer = document.getElementById('details-table-container');
+    const detailsToggle = document.getElementById('details-toggle'); 
+    const graphContainer = document.getElementById('graph-container');
+    const graphToggle = document.getElementById('graph-toggle');
+    const chartCanvas = document.getElementById('balance-chart');
+    let balanceChart = null;
 
-.calculator-container {
-    background-color: var(--container-bg-color);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    width: 100%;
-    max-width: 700px;
-    transition: background-color 0.3s;
-}
+    // Set default dates
+    const today = new Date();
+    document.getElementById('current_date').valueAsDate = today;
+    document.getElementById('cv_receipt_date').value = `${today.getFullYear() + 6}-01-01`;
+    document.getElementById('payout_start_date').value = `${today.getFullYear() + 14}-01-01`;
 
-h1 { font-size: 24px; margin-top: 0; color: var(--header-color); text-align: center; }
-p { color: var(--subtext-color); font-size: 14px; text-align: center; margin-bottom: 25px; }
+    const inputIds = {
+        numbers: ['cv', 'c', 'p_current_value', 'g_income', 'n_payout'],
+        dates: ['current_date', 'cv_receipt_date', 'payout_start_date']
+    };
 
-.input-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 18px; }
-.input-group { margin-bottom: 18px; }
-.input-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-color); font-size: 14px; }
-.input-group input { 
-    width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; 
-    box-sizing: border-box; font-size: 16px; background-color: var(--container-bg-color); color: var(--text-color);
-}
+    calculateBtn.addEventListener('click', () => {
+        const values = {};
+        for (const id of inputIds.numbers) {
+            const value = parseFloat(document.getElementById(id).value);
+            if (isNaN(value)) {
+                alert(`Please enter a valid number in the '${id}' field.`);
+                return;
+            }
+            values[id] = value;
+        }
+        for (const id of inputIds.dates) {
+            const value = document.getElementById(id).value;
+            if (!value) {
+                alert(`Please fill in the date field '${id}'.`);
+                return;
+            }
+            values[id] = new Date(value);
+        }
 
-button {
-    width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 6px;
-    font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s;
-}
-button:hover { background-color: #0056b3; }
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const daysPerYear = 365.25;
+        const n_growth = (values.payout_start_date - values.cv_receipt_date) / msPerDay / daysPerYear;
+        const inflation_years = (values.payout_start_date - values.current_date) / msPerDay / daysPerYear;
+        const g_income = values.g_income / 100;
+        
+        if (n_growth < 0 || inflation_years < 0) {
+            alert("Please check the entered dates. They are not in chronological order.");
+            return;
+        }
 
-/* [Added] Wrapper to align toggle switches */
-.toggles-wrapper {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-    padding: 0 5px; /* Add some padding */
-}
+        const p_future = values.p_current_value * Math.pow(1 + g_income, inflation_years);
+        const calculationResult = calculateRequiredGrowthRate(values.cv, n_growth, values.c, p_future, values.n_payout, g_income);
 
-#result-container { margin-top: 25px; padding: 20px; border-radius: 8px; background-color: var(--result-bg-color); border: 1px solid var(--result-border-color); }
-#result-container.hidden { display: none; }
-#result-container h2 { margin-top: 0; color: var(--result-header-color); font-size: 18px; }
-#intermediate-result { font-size: 14px; background-color: var(--container-bg-color); padding: 10px; border-radius: 5px; margin-bottom: 15px; line-height: 1.5; }
-#result-text { font-size: 16px; color: var(--text-color); text-align: left; margin-bottom: 0; line-height: 1.6; }
+        resultContainer.classList.remove('hidden');
+        
+        intermediateResultEl.innerHTML = `
+            An annual withdrawal of <b>$${values.p_current_value.toLocaleString()}</b> as of today (${values.current_date.toLocaleDateString()}) will be worth <b>$${p_future.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</b> in ${inflation_years.toFixed(2)} years on ${values.payout_start_date.toLocaleDateString()}.
+        `;
 
-#details-table-container { 
-    margin-top: 25px; 
-    width: 100%; 
-    overflow-x: auto; 
-    display: none; 
-}
-#details-table-container table { width: 100%; border-collapse: collapse; font-size: 14px; }
-#details-table-container th, #details-table-container td { border: 1px solid var(--border-color); padding: 8px 12px; text-align: right; }
-#details-table-container th { background-color: var(--table-header-bg-color); font-weight: 600; text-align: center; }
-#details-table-container td:first-child, #details-table-container th:first-child { text-align: center; }
+        if (calculationResult !== null) {
+            const { rate, startingBalance } = calculationResult;
+            resultText.innerHTML = `Under the given conditions, the required <strong>average annual asset growth rate</strong> is approximately <strong>${(rate * 100).toFixed(2)}%</strong>.`;
+            
+            const yearlyData = getYearlySimulationData(startingBalance, values.n_payout, rate, p_future, g_income);
+            
+            generateDetailsTable(yearlyData);
+            generateBalanceChart(yearlyData);
+            
+            tableContainer.style.display = detailsToggle.checked ? 'block' : 'none';
+            graphContainer.style.display = graphToggle.checked ? 'block' : 'none';
 
-/* [Added] Graph container styles */
-#graph-container {
-    display: none; /* Hide by default */
-    margin-top: 25px;
-}
+        } else {
+            resultText.innerHTML = "The goal is not achievable within a realistic growth rate range with the given conditions. Try adjusting the variables.";
+            tableContainer.innerHTML = '';
+            graphContainer.style.display = 'none';
+            if (balanceChart) balanceChart.destroy();
+        }
+    });
 
-/* --- Dark Mode Toggle Switch --- */
-.theme-switch-wrapper { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 15px; position: absolute; top: 20px; right: 20px; }
-.theme-switch-wrapper span { margin-left: 10px; font-size: 14px; }
-.theme-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
-.theme-switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-input:checked + .slider { background-color: #007bff; }
-input:checked + .slider:before { transform: translateX(26px); }
+    detailsToggle.addEventListener('change', () => {
+        if (tableContainer.innerHTML.trim() !== '') {
+            tableContainer.style.display = detailsToggle.checked ? 'block' : 'none';
+        }
+    });
 
-/* [Modified] Details toggle container styles */
-.details-toggle-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--subtext-color);
-    font-size: 14px;
-}
+    graphToggle.addEventListener('change', () => {
+        if (balanceChart) {
+            graphContainer.style.display = graphToggle.checked ? 'block' : 'none';
+        }
+    });
 
-/* --- Fix date field icon color in dark mode --- */
-body.dark-mode input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1) !important;
-}
+    function calculateRequiredGrowthRate(cv, n_growth, c, p, n_payout, g_income) {
+        let lowRate = -0.2, highRate = 0.5, precision = 0.000001, g_asset;
+        for (let i = 0; i < 100; i++) {
+            g_asset = (lowRate + highRate) / 2;
+            if (Math.abs(highRate - lowRate) < precision) break;
+            
+            const totalAssetsAtRetirement = calculateTotalAssetsAtRetirement(cv, n_growth, c, g_asset);
+            const presentValueOfPayouts = calculatePresentValueOfPayouts(p, n_payout, g_income, g_asset);
+            
+            if (totalAssetsAtRetirement > presentValueOfPayouts) highRate = g_asset; else lowRate = g_asset;
+        }
 
-/* --- [Added] Disclaimer Styles --- */
-.disclaimer {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
-    text-align: center;
-    font-size: 12px;
-    color: var(--subtext-color);
-    line-height: 1.5;
-}
+        if (g_asset >= 0.499 || g_asset <= -0.199) return null;
+        const finalStartingBalance = calculateTotalAssetsAtRetirement(cv, n_growth, c, g_asset);
+        return { rate: g_asset, startingBalance: finalStartingBalance };
+    }
+    
+    function calculateTotalAssetsAtRetirement(cv, n_growth, c, g_asset) {
+        const futureValueCV = cv * Math.pow(1 + g_asset, n_growth);
+        const futureValueC = (Math.abs(g_asset) < 1e-9) ? c * n_growth : c * ((Math.pow(1 + g_asset, n_growth) - 1) / g_asset);
+        return futureValueCV + futureValueC;
+    }
 
-.disclaimer p {
-    margin-bottom: 0;
-}
+    function calculatePresentValueOfPayouts(p, n_payout, g_income, g_asset) {
+        if (Math.abs(g_asset - g_income) < 1e-9) return (p * n_payout) / (1 + g_income);
+        const growthFactor = (1 + g_income) / (1 + g_asset);
+        return (p / (g_asset - g_income)) * (1 - Math.pow(growthFactor, n_payout));
+    }
+
+    function getYearlySimulationData(startingBalance, n_payout, g_asset, p_future, g_income) {
+        const data = [];
+        let currentBalance = startingBalance;
+        let currentWithdrawal = p_future;
+
+        for (let year = 1; year <= n_payout; year++) {
+            const growthAmount = currentBalance * g_asset;
+            const endingBalance = currentBalance + growthAmount - currentWithdrawal;
+            data.push({
+                year,
+                startingBalance: currentBalance,
+                growthAmount,
+                withdrawal: currentWithdrawal,
+                endingBalance
+            });
+            currentBalance = endingBalance;
+            currentWithdrawal *= (1 + g_income);
+        }
+        return data;
+    }
+
+    function generateDetailsTable(yearlyData) {
+        tableContainer.innerHTML = ''; 
+        const table = document.createElement('table');
+        table.innerHTML = `<thead><tr><th>Year</th><th>Starting Balance</th><th>Asset Growth</th><th>Withdrawal</th><th>Ending Balance</th></tr></thead><tbody></tbody>`;
+        const tbody = table.querySelector('tbody');
+        
+        yearlyData.forEach(data => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${data.year}</td>
+                <td>$${data.startingBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td>$${data.growthAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td>$${data.withdrawal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td>$${data.endingBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            `;
+        });
+        tableContainer.appendChild(table);
+    }
+
+    function generateBalanceChart(yearlyData) {
+        if (balanceChart) {
+            balanceChart.destroy(); 
+        }
+        
+        const labels = yearlyData.map(d => d.year);
+        const dataPoints = yearlyData.map(d => d.endingBalance);
+
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        const textColor = isDarkMode ? '#e0e0e0' : '#333';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+        balanceChart = new Chart(chartCanvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Ending Balance ($)',
+                    data: dataPoints,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#007bff',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                hover: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            },
+                            color: textColor
+                        },
+                        grid: {
+                            color: gridColor
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Year',
+                            color: textColor
+                        },
+                        ticks: {
+                            color: textColor
+                        },
+                        grid: {
+                            color: gridColor
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                return `Year: ${context[0].label}`;
+                            },
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += '$' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                                return label;
+                            }
+                        },
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+    }
+    
+    const observer = new MutationObserver(() => {
+        if (balanceChart) {
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const textColor = isDarkMode ? '#e0e0e0' : '#333';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+            balanceChart.options.scales.y.ticks.color = textColor;
+            balanceChart.options.scales.y.grid.color = gridColor;
+            balanceChart.options.scales.x.title.color = textColor;
+            balanceChart.options.scales.x.ticks.color = textColor;
+            balanceChart.options.scales.x.grid.color = gridColor;
+            balanceChart.update();
+        }
+    });
+
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+});
