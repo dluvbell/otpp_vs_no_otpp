@@ -31,8 +31,9 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     display: flex;
+    flex-direction: column; /* [수정] 정렬 방향을 수직으로 변경 */
     justify-content: center;
-    align-items: flex-start;
+    align-items: center;      /* [수정] 자식 요소들을 가운데 정렬 */
     min-height: 100vh;
     margin: 0;
     padding: 40px 20px;
