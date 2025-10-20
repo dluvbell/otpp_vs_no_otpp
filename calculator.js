@@ -1,3 +1,12 @@
+/**
+ * Retirement Scenario 1: Required Growth Rate Calculator
+ *
+ * @author    dluvbell
+ * @version   1.0.0
+ * @license   MIT
+ * @date      2025-10-19
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- Dark Mode ---
     const themeToggle = document.getElementById('checkbox');
